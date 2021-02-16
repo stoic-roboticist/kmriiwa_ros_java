@@ -69,6 +69,15 @@ public class LBRMsgGenerator {
 	    
 	    return msg;
 	}
+	
+	public iiwa_msgs.JointPosition getCurrentJointPosition()
+	{
+		iiwa_msgs.JointPosition msg = messageFactory.newFromType(iiwa_msgs.JointPosition._TYPE);
+		double[] position = robot.getCurrentJointPosition().getInternalArray();
+		msg.getHeader().setStamp(time.getCurrentTime());
+	    Conversions.vectorToJointQuantity(position, msg.getPosition());
+	    return msg;
+	}
 
 	public sensor_msgs.JointState getCurrentJointState()
 	{

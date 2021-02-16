@@ -6,6 +6,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+
 import org.ros.address.BindAddress;
 import org.ros.node.DefaultNodeMainExecutor;
 import org.ros.node.NodeConfiguration;
@@ -13,8 +15,10 @@ import org.ros.node.NodeMainExecutor;
 import org.ros.time.TimeProvider;
 import org.ros.time.WallTimeProvider;
 
+import tool.GripperFesto;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.SubscriptionNode;
+import uk.ac.liverpool.lrcfmd.kmriiwa.robot.GripperCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.AddressGenerator;
@@ -27,6 +31,8 @@ import com.kuka.roboticsAPI.deviceModel.LBR;
 public class ROSKmriiwaController extends RoboticsAPIApplication {
 	
 	private LBR robotArm = null;
+	@Inject
+	private GripperFesto gripper;
 	private String robotName = "kmriiwa";
 	
 	private boolean initSuccessful = false;
@@ -53,16 +59,19 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	// Robot interfaces
 	private LBRMsgGenerator lbrMsgGenerator = null;
 	private LBRCommander lbrCommander = null;
+	private GripperCommander festoCommander = null;
 	
 	@Override
 	public void initialize()
 	{
 		robotArm = getContext().getDeviceFromType(LBR.class);
+		gripper.attachTo(robotArm.getFlange());
 		
 		timeProvider = new WallTimeProvider();
 		
 		lbrMsgGenerator = new LBRMsgGenerator(robotArm, robotName, timeProvider);
 		lbrCommander = new LBRCommander(robotArm);
+		festoCommander = new GripperCommander(gripper);
 		
 		subscriber = new SubscriptionNode(robotName);
 		publisher = new PublicationNode(robotName);
@@ -77,7 +86,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e.toString());
+			System.out.println("Error when initializing ROS nodes");
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 			return;
 		}
@@ -92,7 +102,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e.toString());
+			System.out.println("Error when starting ROS node executor");
+			System.out.println(e.getMessage());
 			e.printStackTrace();
 			return;
 		}
@@ -105,16 +116,41 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	public void run() throws Exception {
 		if (!initSuccessful) { throw new RuntimeException("Could not initialize the RoboticApplication successfully."); }
 		
+		//wait for ROS master
+		System.out.println("waiting for the master");
+		long startTime = System.currentTimeMillis();
+		while (!publisher.isConnectedToMaster() || !subscriber.isConnectedToMaster())
+		{
+			if (System.currentTimeMillis() - startTime > 5000)
+			{
+				System.out.println("couldn't connect to master, exiting!!!");
+				return;
+			}
+		}
+		System.out.println("all connected to the ROS master");
+		
 		running = true;
 		
 		// start the publisher thread
-		PublisherTask publisherTask = new PublisherTask(publisher, lbrMsgGenerator);
-		taskRunner = Executors.newSingleThreadScheduledExecutor();
-		taskRunner.scheduleAtFixedRate(publisherTask, 0, 500, TimeUnit.MILLISECONDS);
+		try
+		{
+			PublisherTask publisherTask = new PublisherTask(publisher, lbrMsgGenerator);
+			taskRunner = Executors.newSingleThreadScheduledExecutor();
+			taskRunner.scheduleAtFixedRate(publisherTask, 2000, 500, TimeUnit.MILLISECONDS);
+		}
+		catch (Exception e)
+		{
+			System.out.println("Error when starting publisher thread");
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			taskRunner.shutdownNow();
+			running = false;
+		}
 		
 		while (running)
 		{
-			executeCommands();
+			executeLBRCmd();
+			executeGripperCmd();
 		}
 
 
@@ -131,7 +167,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		return nodeConfig;
 	}
 	
-	private void executeCommands()
+	private void executeLBRCmd()
 	{
 		try
 		{
@@ -139,6 +175,23 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			if (jpTarget != null)
 			{
 				lbrCommander.moveToJointPosition(jpTarget);
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println(e.toString());
+			e.printStackTrace();
+		}
+	}
+	
+	private void executeGripperCmd()
+	{
+		try
+		{
+			std_msgs.Bool openGrp = subscriber.getOpenGripperCmd();
+			if (openGrp != null)
+			{
+				festoCommander.openGripper(openGrp);
 			}
 		}
 		catch (Exception e)
@@ -160,29 +213,25 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		{
 			System.out.println("Shutting down ROS executor");
 			nodeMainExecutor.shutdown();
-			try
-			{
-				nodeMainExecutor.getScheduledExecutorService().awaitTermination(5, TimeUnit.SECONDS);
-			}
-			catch (InterruptedException e)
-			{
-				System.out.println(e.getMessage());
-				nodeMainExecutor.getScheduledExecutorService().shutdownNow();
-			}
+			nodeMainExecutor.getScheduledExecutorService().shutdownNow();
 		}
 	}
 	
 	private void shutDownExecutor(ScheduledExecutorService executor)
 	{
-		executor.shutdown();
-		try
+		if (executor != null)
 		{
-			executor.awaitTermination(5, TimeUnit.SECONDS);
-		}
-		catch (InterruptedException e)
-		{
-			System.out.println(e.getMessage());
-			executor.shutdownNow();
+			executor.shutdown();
+			try
+			{
+				executor.awaitTermination(5, TimeUnit.SECONDS);
+				System.out.println("publisher thread terminated cleanly");
+			}
+			catch (InterruptedException e)
+			{
+				System.out.println(e.getMessage());
+				executor.shutdownNow();
+			}
 		}
 	}
 	
@@ -193,6 +242,11 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	    {
 			running = false;
 			System.out.println("Controller is stopping");
+	    }
+		else if (state == RoboticsAPIApplicationState.MOTIONPAUSING) 
+	    {
+			//running = false;
+			System.out.println("Motion is paused");
 	    }
 	    super.onApplicationStateChanged(state);
 	}

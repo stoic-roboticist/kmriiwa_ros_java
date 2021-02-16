@@ -18,17 +18,19 @@ public class PublisherTask implements Runnable {
 	public void run() {
 		try
 		{
-			sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
-			publisher.publish(jsMsg);
-			iiwa_msgs.CartesianPose cpMsg = lbrMsgGenerator.getCurrentCartesianPose();
-			publisher.publish(cpMsg);
+				sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
+				publisher.publish(jsMsg);
+				iiwa_msgs.CartesianPose cpMsg = lbrMsgGenerator.getCurrentCartesianPose();
+				publisher.publish(cpMsg);
+				iiwa_msgs.JointPosition jpMsg = lbrMsgGenerator.getCurrentJointPosition();
+				publisher.publish(jpMsg);
 		}
 		catch (Exception e)
 		{
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			throw new RuntimeException("Publisher couldn't publish messages");
 		}
 
 	}
-
 }
