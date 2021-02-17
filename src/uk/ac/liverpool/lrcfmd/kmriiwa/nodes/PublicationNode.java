@@ -21,6 +21,10 @@ public class PublicationNode extends AbstractNodeMain {
 	private Publisher<std_msgs.String> armDestinationReachedPublisher;
 	// DestinationReachedPublisher flag publisher for the grippper
 	private Publisher<std_msgs.String> gripperDestinationReachedPublisher;
+	
+	private Publisher<sensor_msgs.LaserScan> laserB1ScanPublisher;
+	private Publisher<sensor_msgs.LaserScan> laserB4ScanPublisher;
+	private Publisher<geometry_msgs.Pose> basePosePublisher;
 	// Robot name used to build ROS topics
 	private String robotName = "kmriiwa";
 	// true if node is connected to ROS master
@@ -47,6 +51,9 @@ public class PublicationNode extends AbstractNodeMain {
 		jointStatePublisher = node.newPublisher(robotName + "/arm/joint_states", sensor_msgs.JointState._TYPE);
 		cartesianPosePublisher = node.newPublisher(robotName + "/arm/state/CartesianPose", iiwa_msgs.CartesianPose._TYPE);
 		jointPositionPublisher = node.newPublisher(robotName + "/arm/state/JointPosition", iiwa_msgs.JointPosition._TYPE);
+		laserB1ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB1Scan", sensor_msgs.LaserScan._TYPE);
+		laserB4ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB4Scan", sensor_msgs.LaserScan._TYPE);
+		basePosePublisher = node.newPublisher(robotName + "/base/state/Pose", geometry_msgs.Pose._TYPE);
 		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/DestinationReached", std_msgs.String._TYPE);
 		gripperDestinationReachedPublisher = node.newPublisher(robotName + "/gripper/state/DestinationReached", std_msgs.String._TYPE);
 		
@@ -66,6 +73,19 @@ public class PublicationNode extends AbstractNodeMain {
 		else if (msg instanceof iiwa_msgs.CartesianPose)
 		{
 			cartesianPosePublisher.publish((iiwa_msgs.CartesianPose) msg);
+		}
+		else if (msg instanceof sensor_msgs.LaserScan)
+		{
+			if (((sensor_msgs.LaserScan) msg).getHeader().getFrameId().matches("laser_B1_link"))
+				laserB1ScanPublisher.publish((sensor_msgs.LaserScan) msg);
+			else
+			{
+				laserB4ScanPublisher.publish((sensor_msgs.LaserScan) msg);
+			}
+		}
+		else if (msg instanceof geometry_msgs.Pose)
+		{
+			basePosePublisher.publish((geometry_msgs.Pose) msg);
 		}
 		else
 		{

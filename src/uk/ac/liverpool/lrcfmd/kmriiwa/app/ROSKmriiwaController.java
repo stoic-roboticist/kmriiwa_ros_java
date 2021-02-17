@@ -19,6 +19,7 @@ import tool.GripperFesto;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.SubscriptionNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.GripperCommander;
+import uk.ac.liverpool.lrcfmd.kmriiwa.robot.KMRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.AddressGenerator;
@@ -61,6 +62,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	private LBRMsgGenerator lbrMsgGenerator = null;
 	private LBRCommander lbrCommander = null;
 	private GripperCommander festoCommander = null;
+	private KMRMsgGenerator kmrMsgGenerator = null;
 	
 	@Override
 	public void initialize()
@@ -73,6 +75,9 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		lbrMsgGenerator = new LBRMsgGenerator(robotArm, robotName, timeProvider);
 		lbrCommander = new LBRCommander(robotArm);
 		festoCommander = new GripperCommander(gripper);
+		
+		kmrMsgGenerator = new KMRMsgGenerator(timeProvider);
+		kmrMsgGenerator.subscribeToSensors(10000);
 		
 		subscriber = new SubscriptionNode(robotName);
 		publisher = new PublicationNode(robotName);
@@ -135,7 +140,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		// start the publisher thread
 		try
 		{
-			PublisherTask publisherTask = new PublisherTask(publisher, lbrMsgGenerator);
+			PublisherTask publisherTask = new PublisherTask(publisher, lbrMsgGenerator, kmrMsgGenerator);
 			taskRunner = Executors.newSingleThreadScheduledExecutor();
 			taskRunner.scheduleAtFixedRate(publisherTask, 2000, 500, TimeUnit.MILLISECONDS);
 		}
@@ -209,6 +214,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		running = false;
 		// stop the publisher thread
 		shutDownExecutor(taskRunner);
+		// close fdi connection
+		kmrMsgGenerator.close();
 		
 		// shutdown ROS node executor
 		if (nodeMainExecutor != null) 
