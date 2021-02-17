@@ -1,6 +1,7 @@
 package uk.ac.liverpool.lrcfmd.kmriiwa.robot;
 
 import tool.GripperFesto;
+import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 
 public class GripperCommander {
 	
@@ -13,7 +14,7 @@ public class GripperCommander {
 		System.out.println("ensure to home the gripper before usage");
 	}
 	
-	public void openGripper (std_msgs.Bool openCmd)
+	public void openGripper (std_msgs.Bool openCmd, PublicationNode pubNode)
 	{
 		if (openCmd != null)
 		{
@@ -29,6 +30,8 @@ public class GripperCommander {
 				gripper.moveSensitive(1);
 				isGrpOpen = false;
 			}
+			// need to check if gripper executed
+			pubNode.publishGripperDestinationReached();
 		}
 	}
 

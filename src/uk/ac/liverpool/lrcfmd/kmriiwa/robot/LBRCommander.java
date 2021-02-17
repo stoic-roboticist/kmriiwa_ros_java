@@ -7,6 +7,7 @@ import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.motionModel.PTP;
 
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Conversions;
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.DestinationReachedListener;
 
 public class LBRCommander {
 	
@@ -18,14 +19,14 @@ public class LBRCommander {
 		this.robot = robot;
 	}
 	
-	public void moveToJointPosition(iiwa_msgs.JointPosition commandPosition)
+	public void moveToJointPosition(iiwa_msgs.JointPosition commandPosition, DestinationReachedListener motionListner)
 	{
 		if (commandPosition != null)
 		{
 			JointPosition jp = new JointPosition(robot.getJointCount());
 			Conversions.rosJointQuantityToKuka(commandPosition.getPosition(), jp);
 			PTP ptpMotion = ptp(jp);
-			robot.move(ptpMotion.setJointVelocityRel(defaultExecVelocity));
+			robot.move(ptpMotion.setJointVelocityRel(defaultExecVelocity),motionListner);
 		}
 	}
 }

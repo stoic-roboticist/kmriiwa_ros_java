@@ -17,8 +17,10 @@ public class PublicationNode extends AbstractNodeMain {
 	private Publisher<iiwa_msgs.JointPosition> jointPositionPublisher;
 	// End effector pose publisher
 	private Publisher<iiwa_msgs.CartesianPose> cartesianPosePublisher;
-	// DestinationReachedPublisher flag publisher
-	private Publisher<std_msgs.Time> destinationReachedPublisher;
+	// DestinationReachedPublisher flag publisher for the arm
+	private Publisher<std_msgs.String> armDestinationReachedPublisher;
+	// DestinationReachedPublisher flag publisher for the grippper
+	private Publisher<std_msgs.String> gripperDestinationReachedPublisher;
 	// Robot name used to build ROS topics
 	private String robotName = "kmriiwa";
 	// true if node is connected to ROS master
@@ -42,10 +44,11 @@ public class PublicationNode extends AbstractNodeMain {
 	{
 		node = connectedNode;
 		
-		jointStatePublisher = node.newPublisher(robotName + "/joint_states", sensor_msgs.JointState._TYPE);
-		cartesianPosePublisher = node.newPublisher(robotName + "/state/CartesianPose", iiwa_msgs.CartesianPose._TYPE);
-		jointPositionPublisher = node.newPublisher(robotName + "/state/JointPosition", iiwa_msgs.JointPosition._TYPE);
-		destinationReachedPublisher = node.newPublisher(robotName + "/state/DestinationReached", std_msgs.Time._TYPE);
+		jointStatePublisher = node.newPublisher(robotName + "/arm/joint_states", sensor_msgs.JointState._TYPE);
+		cartesianPosePublisher = node.newPublisher(robotName + "/arm/state/CartesianPose", iiwa_msgs.CartesianPose._TYPE);
+		jointPositionPublisher = node.newPublisher(robotName + "/arm/state/JointPosition", iiwa_msgs.JointPosition._TYPE);
+		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/DestinationReached", std_msgs.String._TYPE);
+		gripperDestinationReachedPublisher = node.newPublisher(robotName + "/gripper/state/DestinationReached", std_msgs.String._TYPE);
 		
 		connectedToMaster = true;
 	}
@@ -70,11 +73,18 @@ public class PublicationNode extends AbstractNodeMain {
 		}
 	}
 	
-	public synchronized void publishDestinationReached() 
+	public synchronized void publishArmDestinationReached() 
 	{
-    	std_msgs.Time currentTime = node.getTopicMessageFactory().newFromType(std_msgs.Time._TYPE);
-    	currentTime.setData(node.getCurrentTime());
-        destinationReachedPublisher.publish(currentTime);
+    	std_msgs.String reachedMsg = node.getTopicMessageFactory().newFromType(std_msgs.String._TYPE);
+    	reachedMsg.setData("done");
+    	armDestinationReachedPublisher.publish(reachedMsg);
+    }
+	
+	public synchronized void publishGripperDestinationReached() 
+	{
+    	std_msgs.String reachedMsg = node.getTopicMessageFactory().newFromType(std_msgs.String._TYPE);
+    	reachedMsg.setData("done");
+    	gripperDestinationReachedPublisher.publish(reachedMsg);
     }
 	
 	public boolean isConnectedToMaster()

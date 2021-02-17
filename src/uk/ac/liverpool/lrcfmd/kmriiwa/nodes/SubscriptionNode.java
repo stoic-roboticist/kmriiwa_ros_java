@@ -11,7 +11,7 @@ public class SubscriptionNode extends AbstractNodeMain
 {
 	
 	private ConnectedNode node = null;
-	private String robotName = "kmriiwa";
+	private String robotName = "kmriiwa_1";
 	// true if node is connected to ROS master
 	private boolean connectedToMaster = false;
 	
@@ -41,7 +41,7 @@ public class SubscriptionNode extends AbstractNodeMain
 		jp = node.getTopicMessageFactory().newFromType(iiwa_msgs.JointPosition._TYPE);
 		openGrp = node.getTopicMessageFactory().newFromType(std_msgs.Bool._TYPE);
 		
-		jointPositionSubscriber = node.newSubscriber(robotName + "/command/JointPosition", iiwa_msgs.JointPosition._TYPE);
+		jointPositionSubscriber = node.newSubscriber(robotName + "/arm/command/JointPosition", iiwa_msgs.JointPosition._TYPE);
 		jointPositionSubscriber.addMessageListener( new MessageListener<iiwa_msgs.JointPosition>() {
 			@Override
 			public void onNewMessage(iiwa_msgs.JointPosition position)
@@ -54,11 +54,12 @@ public class SubscriptionNode extends AbstractNodeMain
 			}
 		});
 		
-		openGripperSubscriber = node.newSubscriber(robotName + "/command/openGripper", std_msgs.Bool._TYPE);
+		openGripperSubscriber = node.newSubscriber(robotName + "/gripper/command/OpenGripper", std_msgs.Bool._TYPE);
 		openGripperSubscriber.addMessageListener( new MessageListener<std_msgs.Bool>() {
 			@Override
 			public void onNewMessage(std_msgs.Bool cmd)
 			{
+				System.out.println("In sub node gripper msg:" + cmd.getData());
 				synchronized(new_openGrp)
 				{
 					openGrp = cmd;

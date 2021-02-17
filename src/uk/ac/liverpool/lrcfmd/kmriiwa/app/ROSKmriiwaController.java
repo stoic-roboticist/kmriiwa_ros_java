@@ -22,6 +22,7 @@ import uk.ac.liverpool.lrcfmd.kmriiwa.robot.GripperCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.AddressGenerator;
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.DestinationReachedListener;
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.PublisherTask;
 
 import com.kuka.roboticsAPI.applicationModel.RoboticsAPIApplication;
@@ -174,7 +175,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			iiwa_msgs.JointPosition jpTarget = subscriber.getJointPositionTarget();
 			if (jpTarget != null)
 			{
-				lbrCommander.moveToJointPosition(jpTarget);
+				lbrCommander.moveToJointPosition(jpTarget, new DestinationReachedListener(publisher));
 			}
 		}
 		catch (Exception e)
@@ -191,7 +192,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			std_msgs.Bool openGrp = subscriber.getOpenGripperCmd();
 			if (openGrp != null)
 			{
-				festoCommander.openGripper(openGrp);
+				System.out.println("In app gripper msg to exec:" + openGrp.getData());
+				festoCommander.openGripper(openGrp,publisher);
 			}
 		}
 		catch (Exception e)
