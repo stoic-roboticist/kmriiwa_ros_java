@@ -77,7 +77,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		festoCommander = new GripperCommander(gripper);
 		
 		kmrMsgGenerator = new KMRMsgGenerator(timeProvider);
-		kmrMsgGenerator.subscribeToSensors(10000);
+		
 		
 		subscriber = new SubscriptionNode(robotName);
 		publisher = new PublicationNode(robotName);
@@ -130,10 +130,15 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			if (System.currentTimeMillis() - startTime > 5000)
 			{
 				System.out.println("couldn't connect to master, exiting!!!");
+				nodeMainExecutor.shutdown();
+				nodeMainExecutor.getScheduledExecutorService().shutdownNow();
 				return;
 			}
 		}
 		System.out.println("all connected to the ROS master");
+		
+		// subscribe to FDI to get laser and odometry data
+		kmrMsgGenerator.subscribeToSensors(10000);
 		
 		running = true;
 		
@@ -224,6 +229,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			nodeMainExecutor.shutdown();
 			nodeMainExecutor.getScheduledExecutorService().shutdownNow();
 		}
+		
+		super.dispose();
 	}
 	
 	private void shutDownExecutor(ScheduledExecutorService executor)

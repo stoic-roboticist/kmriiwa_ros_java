@@ -4,7 +4,6 @@ import com.kuka.nav.fdi.FDIConnection;
 import com.kuka.nav.fdi.data.Odometry;
 import com.kuka.nav.provider.LaserScan;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 
 import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
@@ -53,11 +52,12 @@ public class KMRMsgGenerator {
 		this.time = timeProvider;
 		InetSocketAddress fdi_address = new InetSocketAddress(FDI_IP,FDI_PORT);
 		fdi = new FDIConnection(fdi_address);
-		fdi.connect();
 	}
 	
 	public void subscribeToSensors(long timeout)
 	{	
+
+		fdi.connect();
 		if (fdi.isConnected())
 		{
 			long startTime = System.currentTimeMillis();
