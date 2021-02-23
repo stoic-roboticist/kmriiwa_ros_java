@@ -19,6 +19,7 @@ import tool.GripperFesto;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.SubscriptionNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.GripperCommander;
+import uk.ac.liverpool.lrcfmd.kmriiwa.robot.KMRCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.KMRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRCommander;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRMsgGenerator;
@@ -29,12 +30,14 @@ import uk.ac.liverpool.lrcfmd.kmriiwa.utility.PublisherTask;
 import com.kuka.roboticsAPI.applicationModel.RoboticsAPIApplication;
 import com.kuka.roboticsAPI.applicationModel.RoboticsAPIApplicationState;
 import com.kuka.roboticsAPI.deviceModel.LBR;
+import com.kuka.roboticsAPI.deviceModel.kmp.KmpOmniMove;
 
 public class ROSKmriiwaController extends RoboticsAPIApplication {
 	
 	private LBR robotArm = null;
 	@Inject
 	private GripperFesto gripper;
+	private KmpOmniMove robotBase = null;
 	private String robotName = "kmriiwa";
 	
 	private boolean initSuccessful = false;
@@ -63,11 +66,13 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	private LBRCommander lbrCommander = null;
 	private GripperCommander festoCommander = null;
 	private KMRMsgGenerator kmrMsgGenerator = null;
+	private KMRCommander kmrCommander = null;
 	
 	@Override
 	public void initialize()
 	{
 		robotArm = getContext().getDeviceFromType(LBR.class);
+		robotBase = getContext().getDeviceFromType(KmpOmniMove.class);
 		gripper.attachTo(robotArm.getFlange());
 		
 		timeProvider = new WallTimeProvider();
@@ -77,6 +82,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		festoCommander = new GripperCommander(gripper);
 		
 		kmrMsgGenerator = new KMRMsgGenerator(timeProvider);
+		kmrCommander = new KMRCommander(robotBase);
 		
 		
 		subscriber = new SubscriptionNode(robotName);
@@ -160,6 +166,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		
 		while (running)
 		{
+			executeKMRCmd();
 			executeLBRCmd();
 			executeGripperCmd();
 		}
@@ -204,6 +211,23 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			{
 				System.out.println("In app gripper msg to exec:" + openGrp.getData());
 				festoCommander.openGripper(openGrp,publisher);
+			}
+		}
+		catch (Exception e)
+		{
+			System.out.println(e.toString());
+			e.printStackTrace();
+		}
+	}
+	
+	private void executeKMRCmd()
+	{
+		try
+		{
+			geometry_msgs.Twist baseTwistTarget = subscriber.getBaseTwistTarget();
+			if (baseTwistTarget != null)
+			{
+				kmrCommander.twistJog(baseTwistTarget);
 			}
 		}
 		catch (Exception e)

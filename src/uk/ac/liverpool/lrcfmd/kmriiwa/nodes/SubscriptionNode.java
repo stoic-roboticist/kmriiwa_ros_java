@@ -17,12 +17,15 @@ public class SubscriptionNode extends AbstractNodeMain
 	
 	private Subscriber<iiwa_msgs.JointPosition> jointPositionSubscriber;
 	private Subscriber<std_msgs.Bool> openGripperSubscriber;
+	private Subscriber<geometry_msgs.Twist> baseTwistSubscriber;
 	
 	private iiwa_msgs.JointPosition jp;
 	private std_msgs.Bool openGrp;
+	private geometry_msgs.Twist baseTwist;
 	
 	private Boolean new_jp = new Boolean(false);
 	private Boolean new_openGrp = new Boolean(false);
+	private Boolean new_baseTwist = new Boolean(false);
 	
 	public SubscriptionNode(String robotName)
 	{
@@ -68,6 +71,19 @@ public class SubscriptionNode extends AbstractNodeMain
 			}
 		});
 		
+		baseTwistSubscriber = node.newSubscriber(robotName + "/base/command/Twist", geometry_msgs.Twist._TYPE);
+		baseTwistSubscriber.addMessageListener( new MessageListener<geometry_msgs.Twist>() {
+			@Override
+			public void onNewMessage(geometry_msgs.Twist twist)
+			{
+				synchronized(new_baseTwist)
+				{
+					baseTwist = twist;
+					new_baseTwist = true;
+				}
+			}
+		});
+		
 		connectedToMaster = true;
 	}
 	
@@ -95,6 +111,22 @@ public class SubscriptionNode extends AbstractNodeMain
 			{
 				new_openGrp = false;
 				return openGrp;
+			}
+			else 
+			{
+				return null;
+			}
+	    }
+	}
+	
+	public geometry_msgs.Twist getBaseTwistTarget()
+	{
+		synchronized (new_baseTwist) 
+		{
+			if (new_baseTwist) 
+			{
+				new_baseTwist = false;
+				return baseTwist;
 			}
 			else 
 			{
