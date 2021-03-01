@@ -1,5 +1,6 @@
 package uk.ac.liverpool.lrcfmd.kmriiwa.robot;
 
+import com.kuka.roboticsAPI.controllerModel.sunrise.state.kmp.IMobilePlatformSafetyState;
 import com.kuka.roboticsAPI.deviceModel.kmp.KmpOmniMove;
 
 public class KMRCommander {
@@ -15,8 +16,11 @@ public class KMRCommander {
 	{
 		if (twistCommand != null)
 		{
-			double vel[] = {twistCommand.getLinear().getX(), twistCommand.getLinear().getY(), twistCommand.getAngular().getZ()};
-			kmr.jog(vel);
+			if (kmr.isMotionEnabled() && kmr.getMobilePlatformSafetyState().getSafetyState() != IMobilePlatformSafetyState.SafetyState.SAFE)
+			{
+				double vel[] = {twistCommand.getLinear().getX(), twistCommand.getLinear().getY(), twistCommand.getAngular().getZ()};
+				kmr.jog(vel);
+			}
 		}
 	}
 
