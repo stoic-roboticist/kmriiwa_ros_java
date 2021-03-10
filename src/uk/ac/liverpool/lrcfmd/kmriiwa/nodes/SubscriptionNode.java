@@ -71,7 +71,7 @@ public class SubscriptionNode extends AbstractNodeMain
 			}
 		});
 		
-		baseTwistSubscriber = node.newSubscriber(robotName + "/base/command/Twist", geometry_msgs.Twist._TYPE);
+		baseTwistSubscriber = node.newSubscriber(robotName + "/base/command/cmd_vel", geometry_msgs.Twist._TYPE);
 		baseTwistSubscriber.addMessageListener( new MessageListener<geometry_msgs.Twist>() {
 			@Override
 			public void onNewMessage(geometry_msgs.Twist twist)

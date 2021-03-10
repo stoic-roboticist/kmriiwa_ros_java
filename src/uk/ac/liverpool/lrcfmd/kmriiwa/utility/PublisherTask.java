@@ -22,8 +22,6 @@ public class PublisherTask implements Runnable {
 	public void run() {
 		try
 		{
-				sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
-				publisher.publish(jsMsg);
 				iiwa_msgs.CartesianPose cpMsg = lbrMsgGenerator.getCurrentCartesianPose();
 				publisher.publish(cpMsg);
 				iiwa_msgs.JointPosition jpMsg = lbrMsgGenerator.getCurrentJointPosition();
@@ -32,8 +30,14 @@ public class PublisherTask implements Runnable {
 				publisher.publish(lsb1Msg);
 				sensor_msgs.LaserScan lsb4Msg = kmrMsgGenerator.getLaserScan(LaserScanner.LASER_B4);
 				publisher.publish(lsb4Msg);
-				geometry_msgs.Pose bpMsg = kmrMsgGenerator.getBasePose();
-				publisher.publish(bpMsg);
+				nav_msgs.Odometry boMsg = kmrMsgGenerator.getBaseOdometry();
+				publisher.publish(boMsg);
+				publisher.publishTransform(boMsg.getHeader().getFrameId(),
+										   boMsg.getChildFrameId(),
+										   boMsg.getHeader().getStamp().totalNsecs(),
+										   boMsg.getPose().getPose());
+				sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
+				publisher.publish(jsMsg);
 		}
 		catch (Exception e)
 		{

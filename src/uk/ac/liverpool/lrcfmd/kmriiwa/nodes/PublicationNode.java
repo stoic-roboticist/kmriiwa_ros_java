@@ -5,8 +5,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
- 
-
+import org.ros.rosjava.tf.pubsub.TransformBroadcaster;
 
 public class PublicationNode extends AbstractNodeMain {
 	
@@ -24,7 +23,8 @@ public class PublicationNode extends AbstractNodeMain {
 	
 	private Publisher<sensor_msgs.LaserScan> laserB1ScanPublisher;
 	private Publisher<sensor_msgs.LaserScan> laserB4ScanPublisher;
-	private Publisher<geometry_msgs.Pose> basePosePublisher;
+	private Publisher<nav_msgs.Odometry> odometryPublisher;
+	private TransformBroadcaster tfPublisher;
 	// Robot name used to build ROS topics
 	private String robotName = "kmriiwa";
 	// true if node is connected to ROS master
@@ -53,10 +53,10 @@ public class PublicationNode extends AbstractNodeMain {
 		jointPositionPublisher = node.newPublisher(robotName + "/arm/state/JointPosition", iiwa_msgs.JointPosition._TYPE);
 		laserB1ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB1Scan", sensor_msgs.LaserScan._TYPE);
 		laserB4ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB4Scan", sensor_msgs.LaserScan._TYPE);
-		basePosePublisher = node.newPublisher(robotName + "/base/state/Pose", geometry_msgs.Pose._TYPE);
+		odometryPublisher = node.newPublisher(robotName + "/base/state/odom", nav_msgs.Odometry._TYPE);
 		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/DestinationReached", std_msgs.String._TYPE);
 		gripperDestinationReachedPublisher = node.newPublisher(robotName + "/gripper/state/DestinationReached", std_msgs.String._TYPE);
-		
+		tfPublisher = new TransformBroadcaster(node);
 		connectedToMaster = true;
 	}
 	
@@ -83,9 +83,9 @@ public class PublicationNode extends AbstractNodeMain {
 				laserB4ScanPublisher.publish((sensor_msgs.LaserScan) msg);
 			}
 		}
-		else if (msg instanceof geometry_msgs.Pose)
+		else if (msg instanceof nav_msgs.Odometry)
 		{
-			basePosePublisher.publish((geometry_msgs.Pose) msg);
+			odometryPublisher.publish((nav_msgs.Odometry) msg);
 		}
 		else
 		{
@@ -99,6 +99,19 @@ public class PublicationNode extends AbstractNodeMain {
     	reachedMsg.setData("done");
     	armDestinationReachedPublisher.publish(reachedMsg);
     }
+	
+	public void publishTransform(String parentFrame, String childFrame, long time,geometry_msgs.Pose pose)
+	{
+		tfPublisher.sendTransform(parentFrame, childFrame, 
+								  time, 
+								  pose.getPosition().getX(), 
+								  pose.getPosition().getY(),
+								  pose.getPosition().getZ(),
+								  pose.getOrientation().getX(),
+								  pose.getOrientation().getY(),
+								  pose.getOrientation().getZ(),
+								  pose.getOrientation().getW());
+	}
 	
 	public synchronized void publishGripperDestinationReached() 
 	{

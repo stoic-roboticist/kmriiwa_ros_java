@@ -1,7 +1,9 @@
 package uk.ac.liverpool.lrcfmd.kmriiwa.app;
 
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -13,6 +15,7 @@ import org.ros.node.DefaultNodeMainExecutor;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 import org.ros.time.TimeProvider;
+import org.ros.time.NtpTimeProvider;
 import org.ros.time.WallTimeProvider;
 
 import tool.GripperFesto;
@@ -47,6 +50,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	private SubscriptionNode subscriber = null;
 	private PublicationNode publisher = null;
 	private ScheduledExecutorService taskRunner = null;
+	private ScheduledExecutorService ntpExecutorService = null;
 	
 	// ROS configuration setting
 	private NodeConfiguration subscriberNodeConfiguration = null;
@@ -75,7 +79,16 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		robotBase = getContext().getDeviceFromType(KmpOmniMove.class);
 		gripper.attachTo(robotArm.getFlange());
 		
-		timeProvider = new WallTimeProvider();
+		//timeProvider = new WallTimeProvider();
+		try
+		{
+			ntpExecutorService = Executors.newScheduledThreadPool(1);
+			timeProvider = new NtpTimeProvider(InetAddress.getByName(masterIP), ntpExecutorService);
+			((NtpTimeProvider) timeProvider).startPeriodicUpdates(100, TimeUnit.MILLISECONDS);
+		}
+		catch (UnknownHostException e) {
+	        System.out.println("Could not setup NTP time provider!");
+	    }
 		
 		lbrMsgGenerator = new LBRMsgGenerator(robotArm, robotName, timeProvider);
 		lbrCommander = new LBRCommander(robotArm);
@@ -153,7 +166,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		{
 			PublisherTask publisherTask = new PublisherTask(publisher, lbrMsgGenerator, kmrMsgGenerator);
 			taskRunner = Executors.newSingleThreadScheduledExecutor();
-			taskRunner.scheduleAtFixedRate(publisherTask, 2000, 500, TimeUnit.MILLISECONDS);
+			taskRunner.scheduleAtFixedRate(publisherTask, 0, 100, TimeUnit.MILLISECONDS);
 		}
 		catch (Exception e)
 		{
@@ -242,6 +255,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	{
 		running = false;
 		// stop the publisher thread
+		shutDownExecutor(ntpExecutorService);
 		shutDownExecutor(taskRunner);
 		// close fdi connection
 		kmrMsgGenerator.close();
@@ -265,7 +279,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			try
 			{
 				executor.awaitTermination(5, TimeUnit.SECONDS);
-				System.out.println("publisher thread terminated cleanly");
+				System.out.println("Executor service terminated cleanly");
 			}
 			catch (InterruptedException e)
 			{

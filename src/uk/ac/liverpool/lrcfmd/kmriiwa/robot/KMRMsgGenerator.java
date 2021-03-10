@@ -97,23 +97,41 @@ public class KMRMsgGenerator {
 			return msg;
 	}
 	
-	public geometry_msgs.Pose getBasePose()
+	public nav_msgs.Odometry getBaseOdometry()
 	{
-		geometry_msgs.Pose msg = messageFactory.newFromType(geometry_msgs.Pose._TYPE);
+		nav_msgs.Odometry msg = messageFactory.newFromType(nav_msgs.Odometry._TYPE);
 		
 		if (fdi.getSubscription().isOdometrySubscribed())
 		{
 			Odometry odometry = fdi.getNewOdometry();
-			msg.getPosition().setX(odometry.getPose().getX());
-			msg.getPosition().setY(odometry.getPose().getY());
-			msg.getPosition().setZ(0);
+			// Pose with covariance msg
+			geometry_msgs.PoseWithCovariance poseWithCov = messageFactory.newFromType(geometry_msgs.PoseWithCovariance._TYPE);
+			poseWithCov.getPose().getPosition().setX(odometry.getPose().getX());
+			poseWithCov.getPose().getPosition().setY(odometry.getPose().getY());
+			poseWithCov.getPose().getPosition().setZ(0.0);
 			
-			double quat[] = euler_to_quaternion(0,0,odometry.getPose().getTheta());
-			msg.getOrientation().setX(quat[0]);
-			msg.getOrientation().setY(quat[1]);
-			msg.getOrientation().setZ(quat[2]);
-			msg.getOrientation().setW(quat[3]);
+			double quatPose[] = euler_to_quaternion(0,0,odometry.getPose().getTheta());
+			poseWithCov.getPose().getOrientation().setX(quatPose[0]);
+			poseWithCov.getPose().getOrientation().setY(quatPose[1]);
+			poseWithCov.getPose().getOrientation().setZ(quatPose[2]);
+			poseWithCov.getPose().getOrientation().setW(quatPose[3]);
 			
+			// Twist with covariance msg
+			geometry_msgs.TwistWithCovariance twistWithCov = messageFactory.newFromType(geometry_msgs.TwistWithCovariance._TYPE);
+			twistWithCov.getTwist().getLinear().setX(odometry.getVelocity().getX());
+			twistWithCov.getTwist().getLinear().setY(odometry.getVelocity().getY());
+			twistWithCov.getTwist().getLinear().setZ(0.0);
+			
+			twistWithCov.getTwist().getAngular().setX(0.0);
+			twistWithCov.getTwist().getAngular().setY(0.0);
+			twistWithCov.getTwist().getAngular().setZ(odometry.getVelocity().getTheta());
+			
+			// Odometry msg
+			msg.getHeader().setStamp(time.getCurrentTime());
+			msg.getHeader().setFrameId("odom");
+			msg.setPose(poseWithCov);
+			msg.setTwist(twistWithCov);
+			msg.setChildFrameId("base_footprint");
 		}
 		else
 		{
