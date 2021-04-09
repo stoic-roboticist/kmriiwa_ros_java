@@ -36,7 +36,6 @@ import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.deviceModel.kmp.KmpOmniMove;
 
 public class ROSKmriiwaController extends RoboticsAPIApplication {
-	
 	private LBR robotArm = null;
 	@Inject
 	private GripperFesto gripper;
@@ -45,6 +44,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	
 	private boolean initSuccessful = false;
 	private boolean running = false;
+	private volatile boolean paused = false;
 	
 	// ROS nodes for communication
 	private SubscriptionNode subscriber = null;
@@ -179,9 +179,16 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		
 		while (running)
 		{
-			executeKMRCmd();
-			executeLBRCmd();
-			executeGripperCmd();
+			if (!paused)
+			{
+				executeKMRCmd();
+				executeLBRCmd();
+				executeGripperCmd();
+			}
+			else
+			{
+				Thread.sleep(50);
+			}
 		}
 
 
@@ -295,13 +302,15 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		if (state == RoboticsAPIApplicationState.STOPPING) 
 	    {
 			running = false;
-			System.out.println("Controller is stopping");
+			paused = true;
 	    }
 		else if (state == RoboticsAPIApplicationState.MOTIONPAUSING) 
 	    {
-			//running = false;
-			System.out.println("Motion is paused");
+			paused = true;
 	    }
-	    super.onApplicationStateChanged(state);
+		else if (state == RoboticsAPIApplicationState.RESUMING) 
+	    {
+			paused = false;
+	    }
 	}
 }
