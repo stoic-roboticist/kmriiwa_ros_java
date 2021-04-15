@@ -38,6 +38,10 @@ public class PublisherTask implements Runnable {
 										   boMsg.getPose().getPose());
 				sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
 				publisher.publish(jsMsg);
+				kmriiwa_msgs.KMRStatus ksMsg = kmrMsgGenerator.getKMRStatus();
+				publisher.publish(ksMsg);
+				kmriiwa_msgs.LBRStatus lsMsg = lbrMsgGenerator.getLBRStatus();
+				publisher.publish(lsMsg);
 		}
 		catch (Exception e)
 		{

@@ -2,6 +2,7 @@ package uk.ac.liverpool.lrcfmd.kmriiwa.robot;
 
 import java.util.Arrays;
 
+import com.kuka.roboticsAPI.controllerModel.sunrise.SunriseSafetyState.SafetyStopType;
 import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.deviceModel.LBRE1Redundancy;
 import com.kuka.roboticsAPI.geometricModel.Frame;
@@ -43,9 +44,9 @@ public class LBRMsgGenerator {
 		this.baseFrameID = robotName + BASE_FRAME_SUFFIX;
 		this.time = timeProvider;
 		
-		joint_names = new String[] { robotName + "_iiwa_joint_1", robotName + "_iiwa_joint_2", robotName + "_iiwa_joint_3", 
-				robotName + "_iiwa_joint_4", robotName + "_iiwa_joint_5", robotName + "_iiwa_joint_6",
-		        robotName + "_iiwa_joint_7" };
+		joint_names = new String[] { robotName + "_joint_1", robotName + "_joint_2", robotName + "_joint_3", 
+				robotName + "_joint_4", robotName + "_joint_5", robotName + "_joint_6",
+		        robotName + "_joint_7" };
 	}
 	
 	/**
@@ -87,6 +88,21 @@ public class LBRMsgGenerator {
 		msg.setName(Arrays.asList(joint_names));
 		msg.setPosition(robot.getCurrentJointPosition().getInternalArray());
 		msg.setEffort(robot.getMeasuredTorque().getTorqueValues());
+		
+		return msg;
+	}
+	
+	public kmriiwa_msgs.LBRStatus getLBRStatus()
+	{
+		
+		kmriiwa_msgs.LBRStatus msg = messageFactory.newFromType(kmriiwa_msgs.LBRStatus._TYPE);
+		
+		msg.getHeader().setStamp(time.getCurrentTime());
+		msg.setMotionEnabled(robot.isMotionEnabled());
+		msg.setAxesMastered(robot.isMastered());
+		msg.setAxesGmsReferenced(robot.getSafetyState().areAllAxesGMSReferenced());
+		msg.setAxesPositionReferenced(robot.getSafetyState().areAllAxesPositionReferenced());
+		msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
 		
 		return msg;
 	}

@@ -20,6 +20,10 @@ public class PublicationNode extends AbstractNodeMain {
 	private Publisher<std_msgs.String> armDestinationReachedPublisher;
 	// DestinationReachedPublisher flag publisher for the grippper
 	private Publisher<std_msgs.String> gripperDestinationReachedPublisher;
+	// KMR base state publisher
+	private Publisher<kmriiwa_msgs.KMRStatus> KMRStatusPublisher;
+	// LBR state publisher
+	private Publisher<kmriiwa_msgs.LBRStatus> LBRStatusPublisher;
 	
 	private Publisher<sensor_msgs.LaserScan> laserB1ScanPublisher;
 	private Publisher<sensor_msgs.LaserScan> laserB4ScanPublisher;
@@ -54,8 +58,10 @@ public class PublicationNode extends AbstractNodeMain {
 		laserB1ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB1Scan", sensor_msgs.LaserScan._TYPE);
 		laserB4ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB4Scan", sensor_msgs.LaserScan._TYPE);
 		odometryPublisher = node.newPublisher(robotName + "/base/state/odom", nav_msgs.Odometry._TYPE);
+		KMRStatusPublisher = node.newPublisher(robotName + "/base/state/RobotStatus", kmriiwa_msgs.KMRStatus._TYPE);
 		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/DestinationReached", std_msgs.String._TYPE);
 		gripperDestinationReachedPublisher = node.newPublisher(robotName + "/gripper/state/DestinationReached", std_msgs.String._TYPE);
+		LBRStatusPublisher = node.newPublisher(robotName + "/arm/state/RobotStatus", kmriiwa_msgs.LBRStatus._TYPE);
 		tfPublisher = new TransformBroadcaster(node);
 		connectedToMaster = true;
 	}
@@ -86,6 +92,14 @@ public class PublicationNode extends AbstractNodeMain {
 		else if (msg instanceof nav_msgs.Odometry)
 		{
 			odometryPublisher.publish((nav_msgs.Odometry) msg);
+		}
+		else if (msg instanceof kmriiwa_msgs.KMRStatus)
+		{
+			KMRStatusPublisher.publish((kmriiwa_msgs.KMRStatus) msg);
+		}
+		else if (msg instanceof kmriiwa_msgs.LBRStatus)
+		{
+			LBRStatusPublisher.publish((kmriiwa_msgs.LBRStatus) msg);
 		}
 		else
 		{

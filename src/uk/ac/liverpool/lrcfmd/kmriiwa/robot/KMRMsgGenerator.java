@@ -3,6 +3,9 @@ package uk.ac.liverpool.lrcfmd.kmriiwa.robot;
 import com.kuka.nav.fdi.FDIConnection;
 import com.kuka.nav.fdi.data.Odometry;
 import com.kuka.nav.provider.LaserScan;
+import com.kuka.roboticsAPI.controllerModel.sunrise.SunriseSafetyState.SafetyStopType;
+import com.kuka.roboticsAPI.deviceModel.kmp.KmpOmniMove;
+
 import java.net.InetSocketAddress;
 
 import org.ros.message.MessageFactory;
@@ -11,6 +14,7 @@ import org.ros.time.TimeProvider;
 
 public class KMRMsgGenerator {
 	
+	private KmpOmniMove robot = null;
 	 // Data retrieval socket via FDI 
     private FDIConnection fdi;
 	private final String FDI_IP = "172.31.1.102";
@@ -47,8 +51,9 @@ public class KMRMsgGenerator {
 	private MessageFactory messageFactory = nodeConf.getTopicMessageFactory();
 	private TimeProvider time;
 	
-	public KMRMsgGenerator(TimeProvider timeProvider)
+	public KMRMsgGenerator(KmpOmniMove robot,TimeProvider timeProvider)
 	{
+		this.robot = robot;
 		this.time = timeProvider;
 		InetSocketAddress fdi_address = new InetSocketAddress(FDI_IP,FDI_PORT);
 		fdi = new FDIConnection(fdi_address);
@@ -137,6 +142,20 @@ public class KMRMsgGenerator {
 		{
 			System.out.println("FDI not connected to odometry");
 		}
+		
+		return msg;
+	}
+	
+	public kmriiwa_msgs.KMRStatus getKMRStatus()
+	{
+		kmriiwa_msgs.KMRStatus msg = messageFactory.newFromType(kmriiwa_msgs.KMRStatus._TYPE);
+		
+		msg.getHeader().setStamp(time.getCurrentTime());
+		msg.setChargeStatePercentage((int) robot.getMobilePlatformBatteryState().getStateOfCharge());
+		msg.setWarningFieldClear(robot.getMobilePlatformSafetyState().isWarningFieldBreached());
+		msg.setSafetyFieldClear(robot.getMobilePlatformSafetyState().isSafetyFieldBreached());
+		msg.setMotionEnabled(robot.isMotionEnabled());
+		msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
 		
 		return msg;
 	}

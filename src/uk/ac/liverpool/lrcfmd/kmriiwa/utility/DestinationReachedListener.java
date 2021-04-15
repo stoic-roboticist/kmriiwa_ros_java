@@ -1,5 +1,6 @@
 package uk.ac.liverpool.lrcfmd.kmriiwa.utility;
 
+import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.ActionServerNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 
 import com.kuka.roboticsAPI.executionModel.ExecutionState;
@@ -10,7 +11,14 @@ import com.kuka.roboticsAPI.motionModel.IMotionContainerListener;
 
 public class DestinationReachedListener implements IMotionContainerListener {
 	
-	private PublicationNode publisher;
+	private PublicationNode publisher = null;
+	private ActionServerNode actionServer = null;
+	
+	public DestinationReachedListener(PublicationNode publisher, ActionServerNode actionServer)
+	{
+		this.publisher = publisher;
+		this.actionServer = actionServer;
+	}
 	
 	public DestinationReachedListener(PublicationNode publisher)
 	{
@@ -29,7 +37,18 @@ public class DestinationReachedListener implements IMotionContainerListener {
 		System.out.println("Motion finished");
 	    if (publisher != null) 
 	    {
-	      publisher.publishArmDestinationReached();
+	    	publisher.publishArmDestinationReached();
+	    }
+	    if (actionServer != null  && actionServer.hasCurrentGoal() && actionServer.isActive()) 
+	    {
+	    	if (!container.hasError())
+	    	{
+	    		actionServer.markCurrentGoalReached();
+	    	}
+	    	else
+	    	{
+	    		actionServer.markCurrentGoalFailed(container.getErrorMessage());
+	    	}
 	    }
 	}
 
@@ -37,6 +56,7 @@ public class DestinationReachedListener implements IMotionContainerListener {
 	public void motionFinished(IMotion motion) 
 	{
 		// Not used
+		// Test to see if feedback can be sent		
 	}
 
 	@Override

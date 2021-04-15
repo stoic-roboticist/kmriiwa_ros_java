@@ -19,6 +19,8 @@ import org.ros.time.NtpTimeProvider;
 import org.ros.time.WallTimeProvider;
 
 import tool.GripperFesto;
+import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.ActionServerNode;
+import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.ActionServerNode.Goal;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.SubscriptionNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.GripperCommander;
@@ -35,6 +37,8 @@ import com.kuka.roboticsAPI.applicationModel.RoboticsAPIApplicationState;
 import com.kuka.roboticsAPI.deviceModel.LBR;
 import com.kuka.roboticsAPI.deviceModel.kmp.KmpOmniMove;
 
+import control_msgs.FollowJointTrajectoryActionGoal;
+
 public class ROSKmriiwaController extends RoboticsAPIApplication {
 	private LBR robotArm = null;
 	@Inject
@@ -49,12 +53,14 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	// ROS nodes for communication
 	private SubscriptionNode subscriber = null;
 	private PublicationNode publisher = null;
+	private ActionServerNode actionServer = null;
 	private ScheduledExecutorService taskRunner = null;
 	private ScheduledExecutorService ntpExecutorService = null;
 	
 	// ROS configuration setting
 	private NodeConfiguration subscriberNodeConfiguration = null;
 	private NodeConfiguration publisherNodeConfiguration = null;
+	private NodeConfiguration actionNodeConfiguration = null;
 	private TimeProvider timeProvider = null;
 	private AddressGenerator addressGenerator = new AddressGenerator();
 	private NodeMainExecutor nodeMainExecutor = null;
@@ -94,12 +100,13 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		lbrCommander = new LBRCommander(robotArm);
 		festoCommander = new GripperCommander(gripper);
 		
-		kmrMsgGenerator = new KMRMsgGenerator(timeProvider);
+		kmrMsgGenerator = new KMRMsgGenerator(robotBase, timeProvider);
 		kmrCommander = new KMRCommander(robotBase);
 		
 		
 		subscriber = new SubscriptionNode(robotName);
 		publisher = new PublicationNode(robotName);
+		actionServer = new ActionServerNode(robotName);
 		
 		// ROS nodes initialisation
 		try
@@ -107,6 +114,8 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			subscriberNodeConfiguration = configureNode(subscriber.getDefaultNodeName().toString(), addressGenerator.getNewAddress(), 
 					addressGenerator.getNewAddress());
 			publisherNodeConfiguration = configureNode(publisher.getDefaultNodeName().toString(), addressGenerator.getNewAddress(), 
+					addressGenerator.getNewAddress());
+			actionNodeConfiguration = configureNode(actionServer.getDefaultNodeName().toString(), addressGenerator.getNewAddress(), 
 					addressGenerator.getNewAddress());
 		}
 		catch (Exception e)
@@ -123,6 +132,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			
 			nodeMainExecutor.execute(publisher, publisherNodeConfiguration);
 			nodeMainExecutor.execute(subscriber, subscriberNodeConfiguration);
+			nodeMainExecutor.execute(actionServer, actionNodeConfiguration);
 			System.out.println("ROS node executor initialized");
 		}
 		catch (Exception e)
@@ -144,7 +154,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		//wait for ROS master
 		System.out.println("waiting for the master");
 		long startTime = System.currentTimeMillis();
-		while (!publisher.isConnectedToMaster() || !subscriber.isConnectedToMaster())
+		while (!publisher.isConnectedToMaster() || !subscriber.isConnectedToMaster() || !actionServer.isConnectedToMaster())
 		{
 			if (System.currentTimeMillis() - startTime > 5000)
 			{
@@ -209,10 +219,24 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	{
 		try
 		{
-			iiwa_msgs.JointPosition jpTarget = subscriber.getJointPositionTarget();
-			if (jpTarget != null)
+			if (actionServer.newGoalAvailable())
 			{
-				lbrCommander.moveToJointPosition(jpTarget, new DestinationReachedListener(publisher));
+				actionServer.acceptNewGoal();
+				if(actionServer.hasCurrentGoal())
+				{
+					Goal<?> goal = actionServer.getCurrentGoal();
+					// pass the goal to LBRCommander along with the actionServer
+					FollowJointTrajectoryActionGoal jointTrajectoryGoal = ((FollowJointTrajectoryActionGoal) goal.goal);
+					lbrCommander.followJointTrajectory(jointTrajectoryGoal, new DestinationReachedListener(publisher, actionServer));
+				}
+			}
+			else
+			{
+				iiwa_msgs.JointPosition jpTarget = subscriber.getJointPositionTarget();
+				if (jpTarget != null)
+				{
+					lbrCommander.moveToJointPosition(jpTarget, new DestinationReachedListener(publisher));
+				}
 			}
 		}
 		catch (Exception e)
