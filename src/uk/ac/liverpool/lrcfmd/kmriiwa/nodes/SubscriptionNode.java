@@ -15,11 +15,11 @@ public class SubscriptionNode extends AbstractNodeMain
 	// true if node is connected to ROS master
 	private boolean connectedToMaster = false;
 	
-	private Subscriber<iiwa_msgs.JointPosition> jointPositionSubscriber;
+	private Subscriber<kmriiwa_msgs.JointPosition> jointPositionSubscriber;
 	private Subscriber<std_msgs.Bool> openGripperSubscriber;
 	private Subscriber<geometry_msgs.Twist> baseTwistSubscriber;
 	
-	private iiwa_msgs.JointPosition jp;
+	private kmriiwa_msgs.JointPosition jp;
 	private std_msgs.Bool openGrp;
 	private geometry_msgs.Twist baseTwist;
 	
@@ -41,13 +41,13 @@ public class SubscriptionNode extends AbstractNodeMain
 	public void onStart(ConnectedNode connectedNode)
 	{
 		node = connectedNode;
-		jp = node.getTopicMessageFactory().newFromType(iiwa_msgs.JointPosition._TYPE);
+		jp = node.getTopicMessageFactory().newFromType(kmriiwa_msgs.JointPosition._TYPE);
 		openGrp = node.getTopicMessageFactory().newFromType(std_msgs.Bool._TYPE);
 		
-		jointPositionSubscriber = node.newSubscriber(robotName + "/arm/command/JointPosition", iiwa_msgs.JointPosition._TYPE);
-		jointPositionSubscriber.addMessageListener( new MessageListener<iiwa_msgs.JointPosition>() {
+		jointPositionSubscriber = node.newSubscriber(robotName + "/arm/command/JointPosition", kmriiwa_msgs.JointPosition._TYPE);
+		jointPositionSubscriber.addMessageListener( new MessageListener<kmriiwa_msgs.JointPosition>() {
 			@Override
-			public void onNewMessage(iiwa_msgs.JointPosition position)
+			public void onNewMessage(kmriiwa_msgs.JointPosition position)
 			{
 				synchronized(new_jp)
 				{
@@ -87,7 +87,7 @@ public class SubscriptionNode extends AbstractNodeMain
 		connectedToMaster = true;
 	}
 	
-	public iiwa_msgs.JointPosition getJointPositionTarget()
+	public kmriiwa_msgs.JointPosition getJointPositionTarget()
 	{
 		synchronized (new_jp) 
 		{

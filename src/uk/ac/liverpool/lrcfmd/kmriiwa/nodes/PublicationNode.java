@@ -12,10 +12,6 @@ public class PublicationNode extends AbstractNodeMain {
 	// ROS publishers for KMRIIWA platform
 	// Joint state publisher
 	private Publisher<sensor_msgs.JointState> jointStatePublisher;
-	// IIWA Joint position publisher
-	private Publisher<iiwa_msgs.JointPosition> jointPositionPublisher;
-	// End effector pose publisher
-	private Publisher<iiwa_msgs.CartesianPose> cartesianPosePublisher;
 	// DestinationReachedPublisher flag publisher for the arm
 	private Publisher<std_msgs.String> armDestinationReachedPublisher;
 	// DestinationReachedPublisher flag publisher for the grippper
@@ -53,8 +49,6 @@ public class PublicationNode extends AbstractNodeMain {
 		node = connectedNode;
 		
 		jointStatePublisher = node.newPublisher(robotName + "/arm/joint_states", sensor_msgs.JointState._TYPE);
-		cartesianPosePublisher = node.newPublisher(robotName + "/arm/state/CartesianPose", iiwa_msgs.CartesianPose._TYPE);
-		jointPositionPublisher = node.newPublisher(robotName + "/arm/state/JointPosition", iiwa_msgs.JointPosition._TYPE);
 		laserB1ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB1Scan", sensor_msgs.LaserScan._TYPE);
 		laserB4ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB4Scan", sensor_msgs.LaserScan._TYPE);
 		odometryPublisher = node.newPublisher(robotName + "/base/state/odom", nav_msgs.Odometry._TYPE);
@@ -71,14 +65,6 @@ public class PublicationNode extends AbstractNodeMain {
 		if (msg instanceof sensor_msgs.JointState)
 		{
 			jointStatePublisher.publish((sensor_msgs.JointState) msg);
-		}
-		else if (msg instanceof iiwa_msgs.JointPosition)
-		{
-			jointPositionPublisher.publish((iiwa_msgs.JointPosition) msg);
-		}
-		else if (msg instanceof iiwa_msgs.CartesianPose)
-		{
-			cartesianPosePublisher.publish((iiwa_msgs.CartesianPose) msg);
 		}
 		else if (msg instanceof sensor_msgs.LaserScan)
 		{

@@ -44,7 +44,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	@Inject
 	private GripperFesto gripper;
 	private KmpOmniMove robotBase = null;
-	private String robotName = "kmriiwa";
+	private String robotName;
 	
 	private boolean initSuccessful = false;
 	private boolean running = false;
@@ -66,10 +66,10 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	private NodeMainExecutor nodeMainExecutor = null;
 	
 	// Define robot and master IP
-	private final String masterIP = "172.31.1.77";
-	private final String masterPort = "11311";
-	private final String robotIP = "172.31.1.10";
-	private final String masterUri = "http://" + masterIP + ":" + masterPort;
+	private String masterIP;
+	private String masterPort;
+	private String robotIP;
+	private String masterUri;
 	
 	// Robot interfaces
 	private LBRMsgGenerator lbrMsgGenerator = null;
@@ -81,10 +81,15 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	@Override
 	public void initialize()
 	{
+		robotName = getApplicationData().getProcessData("robot_name").getValue();
+		masterIP = getApplicationData().getProcessData("master_ip").getValue();
+		masterPort = getApplicationData().getProcessData("master_port").getValue();
+		robotIP = getApplicationData().getProcessData("robot_ip").getValue();
+		masterUri = "http://" + masterIP + ":" + masterPort;
+				
 		robotArm = getContext().getDeviceFromType(LBR.class);
 		robotBase = getContext().getDeviceFromType(KmpOmniMove.class);
 		gripper.attachTo(robotArm.getFlange());
-		
 		//timeProvider = new WallTimeProvider();
 		try
 		{
@@ -96,7 +101,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 	        System.out.println("Could not setup NTP time provider!");
 	    }
 		
-		lbrMsgGenerator = new LBRMsgGenerator(robotArm, robotName, timeProvider);
+		lbrMsgGenerator = new LBRMsgGenerator(robotArm, timeProvider);
 		lbrCommander = new LBRCommander(robotArm);
 		festoCommander = new GripperCommander(gripper);
 		
@@ -232,7 +237,7 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 			}
 			else
 			{
-				iiwa_msgs.JointPosition jpTarget = subscriber.getJointPositionTarget();
+				kmriiwa_msgs.JointPosition jpTarget = subscriber.getJointPositionTarget();
 				if (jpTarget != null)
 				{
 					lbrCommander.moveToJointPosition(jpTarget, new DestinationReachedListener(publisher));

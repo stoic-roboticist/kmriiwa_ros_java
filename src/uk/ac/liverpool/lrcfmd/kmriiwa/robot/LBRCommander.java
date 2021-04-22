@@ -15,25 +15,30 @@ import com.kuka.roboticsAPI.motionModel.SplineJP;
 import control_msgs.FollowJointTrajectoryActionGoal;
 
 import trajectory_msgs.JointTrajectoryPoint;
-import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Conversions;
 import uk.ac.liverpool.lrcfmd.kmriiwa.utility.DestinationReachedListener;
 
 public class LBRCommander {
 	
 	private LBR robot;
-	double defaultExecVelocity = 0.2;
+	double defaultExecVelocity = 0.15;
 	
 	public LBRCommander(LBR robot)
 	{
 		this.robot = robot;
 	}
 	
-	public void moveToJointPosition(iiwa_msgs.JointPosition commandPosition, DestinationReachedListener motionListner)
+	public void moveToJointPosition(kmriiwa_msgs.JointPosition commandPosition, DestinationReachedListener motionListner)
 	{
 		if (commandPosition != null)
 		{
 			JointPosition jp = new JointPosition(robot.getJointCount());
-			Conversions.rosJointQuantityToKuka(commandPosition.getPosition(), jp);
+			jp.set(0, commandPosition.getA1());
+			jp.set(1, commandPosition.getA2());
+			jp.set(2, commandPosition.getA3());
+			jp.set(3, commandPosition.getA4());
+			jp.set(4, commandPosition.getA5());
+			jp.set(5, commandPosition.getA6());
+			jp.set(6, commandPosition.getA7());
 			PTP ptpMotion = ptp(jp);
 			robot.move(ptpMotion.setJointVelocityRel(defaultExecVelocity),motionListner);
 		}
@@ -57,7 +62,7 @@ public class LBRCommander {
 				{
 					JointTrajectoryPoint trajectoryPoint = trajectoryPointsIterator.next();
 					double[] positions = trajectoryPoint.getPositions();
-					ptpList.add(ptp(new JointPosition(positions)));
+					ptpList.add(ptp(new JointPosition(positions)).setJointVelocityRel(defaultExecVelocity));
 					//double[] velocities = trajectoryPoint.getVelocities();
 					//double[] accelerations = trajectoryPoint.getAccelerations();
 					//ptpList.add(ptp(new JointPosition(positions)).setJointVelocityRel(velocities).setJointAccelerationRel(accelerations));

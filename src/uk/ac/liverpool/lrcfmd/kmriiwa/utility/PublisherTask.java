@@ -22,26 +22,22 @@ public class PublisherTask implements Runnable {
 	public void run() {
 		try
 		{
-				iiwa_msgs.CartesianPose cpMsg = lbrMsgGenerator.getCurrentCartesianPose();
-				publisher.publish(cpMsg);
-				iiwa_msgs.JointPosition jpMsg = lbrMsgGenerator.getCurrentJointPosition();
-				publisher.publish(jpMsg);
-				sensor_msgs.LaserScan lsb1Msg = kmrMsgGenerator.getLaserScan(LaserScanner.LASER_B1);
-				publisher.publish(lsb1Msg);
-				sensor_msgs.LaserScan lsb4Msg = kmrMsgGenerator.getLaserScan(LaserScanner.LASER_B4);
-				publisher.publish(lsb4Msg);
-				nav_msgs.Odometry boMsg = kmrMsgGenerator.getBaseOdometry();
-				publisher.publish(boMsg);
-				publisher.publishTransform(boMsg.getHeader().getFrameId(),
-										   boMsg.getChildFrameId(),
-										   boMsg.getHeader().getStamp().totalNsecs(),
-										   boMsg.getPose().getPose());
-				sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
-				publisher.publish(jsMsg);
-				kmriiwa_msgs.KMRStatus ksMsg = kmrMsgGenerator.getKMRStatus();
-				publisher.publish(ksMsg);
-				kmriiwa_msgs.LBRStatus lsMsg = lbrMsgGenerator.getLBRStatus();
-				publisher.publish(lsMsg);
+			sensor_msgs.JointState jsMsg = lbrMsgGenerator.getCurrentJointState();
+			publisher.publish(jsMsg);
+			sensor_msgs.LaserScan lsb1Msg = kmrMsgGenerator.getLaserScan(LaserScanner.LASER_B1);
+			publisher.publish(lsb1Msg);
+			sensor_msgs.LaserScan lsb4Msg = kmrMsgGenerator.getLaserScan(LaserScanner.LASER_B4);
+			publisher.publish(lsb4Msg);
+			nav_msgs.Odometry boMsg = kmrMsgGenerator.getBaseOdometry();
+			publisher.publish(boMsg);
+			publisher.publishTransform(boMsg.getHeader().getFrameId(),
+									   boMsg.getChildFrameId(),
+									   boMsg.getHeader().getStamp().totalNsecs(),
+									   boMsg.getPose().getPose());
+			kmriiwa_msgs.KMRStatus ksMsg = kmrMsgGenerator.getKMRStatus();
+			publisher.publish(ksMsg);
+			kmriiwa_msgs.LBRStatus lsMsg = lbrMsgGenerator.getLBRStatus();
+			publisher.publish(lsMsg);
 		}
 		catch (Exception e)
 		{
