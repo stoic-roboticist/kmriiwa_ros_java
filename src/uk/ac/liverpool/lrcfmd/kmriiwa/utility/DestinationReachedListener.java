@@ -34,7 +34,6 @@ public class DestinationReachedListener implements IMotionContainerListener {
 	@Override
 	public void containerFinished(IMotionContainer container) 
 	{
-		System.out.println("Motion finished");
 	    if (publisher != null) 
 	    {
 	    	publisher.publishArmDestinationReached();

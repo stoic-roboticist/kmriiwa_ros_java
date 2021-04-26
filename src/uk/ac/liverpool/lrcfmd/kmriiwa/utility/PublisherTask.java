@@ -1,6 +1,7 @@
 package uk.ac.liverpool.lrcfmd.kmriiwa.utility;
 
 import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.PublicationNode;
+import uk.ac.liverpool.lrcfmd.kmriiwa.nodes.ToolNode;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.KMRMsgGenerator;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.KMRMsgGenerator.LaserScanner;
 import uk.ac.liverpool.lrcfmd.kmriiwa.robot.LBRMsgGenerator;
@@ -41,7 +42,8 @@ public class PublisherTask implements Runnable {
 		}
 		catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			Logger.error("publisher task error");
+			Logger.error(e.getMessage());
 			e.printStackTrace();
 			throw new RuntimeException("Publisher couldn't publish messages");
 		}

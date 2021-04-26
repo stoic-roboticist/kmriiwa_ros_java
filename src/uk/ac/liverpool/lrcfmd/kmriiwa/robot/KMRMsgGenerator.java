@@ -12,6 +12,8 @@ import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 import org.ros.time.TimeProvider;
 
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Logger;
+
 public class KMRMsgGenerator {
 	
 	private KmpOmniMove robot = null;
@@ -96,7 +98,7 @@ public class KMRMsgGenerator {
 			}
 			else
 			{
-				System.out.println("FDI not connected to laser scanner" + laserScanner.id);
+				Logger.warn("FDI not connected to laser scanner" + laserScanner.id);
 			}
 			
 			return msg;
@@ -140,7 +142,7 @@ public class KMRMsgGenerator {
 		}
 		else
 		{
-			System.out.println("FDI not connected to odometry");
+			Logger.warn("FDI not connected to odometry");
 		}
 		
 		return msg;
@@ -190,7 +192,7 @@ public class KMRMsgGenerator {
 		}
 		catch (Exception e)
 		{
-			System.out.println("couldn't disconnect FDI socket");
+			Logger.error("couldn't disconnect FDI socket");
 		}
 	}
 

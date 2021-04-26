@@ -7,20 +7,20 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Publisher;
 import org.ros.rosjava.tf.pubsub.TransformBroadcaster;
 
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Logger;
+
 public class PublicationNode extends AbstractNodeMain {
+	
 	
 	// ROS publishers for KMRIIWA platform
 	// Joint state publisher
 	private Publisher<sensor_msgs.JointState> jointStatePublisher;
 	// DestinationReachedPublisher flag publisher for the arm
 	private Publisher<std_msgs.String> armDestinationReachedPublisher;
-	// DestinationReachedPublisher flag publisher for the grippper
-	private Publisher<std_msgs.String> gripperDestinationReachedPublisher;
 	// KMR base state publisher
 	private Publisher<kmriiwa_msgs.KMRStatus> KMRStatusPublisher;
 	// LBR state publisher
 	private Publisher<kmriiwa_msgs.LBRStatus> LBRStatusPublisher;
-	
 	private Publisher<sensor_msgs.LaserScan> laserB1ScanPublisher;
 	private Publisher<sensor_msgs.LaserScan> laserB4ScanPublisher;
 	private Publisher<nav_msgs.Odometry> odometryPublisher;
@@ -53,8 +53,7 @@ public class PublicationNode extends AbstractNodeMain {
 		laserB4ScanPublisher = node.newPublisher(robotName + "/base/state/LaserB4Scan", sensor_msgs.LaserScan._TYPE);
 		odometryPublisher = node.newPublisher(robotName + "/base/state/odom", nav_msgs.Odometry._TYPE);
 		KMRStatusPublisher = node.newPublisher(robotName + "/base/state/RobotStatus", kmriiwa_msgs.KMRStatus._TYPE);
-		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/DestinationReached", std_msgs.String._TYPE);
-		gripperDestinationReachedPublisher = node.newPublisher(robotName + "/gripper/state/DestinationReached", std_msgs.String._TYPE);
+		armDestinationReachedPublisher = node.newPublisher(robotName + "/arm/state/JointPositionReached", std_msgs.String._TYPE);
 		LBRStatusPublisher = node.newPublisher(robotName + "/arm/state/RobotStatus", kmriiwa_msgs.LBRStatus._TYPE);
 		tfPublisher = new TransformBroadcaster(node);
 		connectedToMaster = true;
@@ -89,7 +88,7 @@ public class PublicationNode extends AbstractNodeMain {
 		}
 		else
 		{
-			System.out.println("Couldn't send unknown message type");
+			Logger.warn("Couldn't send unknown message type");
 		}
 	}
 	
@@ -113,12 +112,6 @@ public class PublicationNode extends AbstractNodeMain {
 								  pose.getOrientation().getW());
 	}
 	
-	public synchronized void publishGripperDestinationReached() 
-	{
-    	std_msgs.String reachedMsg = node.getTopicMessageFactory().newFromType(std_msgs.String._TYPE);
-    	reachedMsg.setData("done");
-    	gripperDestinationReachedPublisher.publish(reachedMsg);
-    }
 	
 	public boolean isConnectedToMaster()
 	{

@@ -9,6 +9,7 @@ import control_msgs.FollowJointTrajectoryActionFeedback;
 import control_msgs.FollowJointTrajectoryActionResult;
 import control_msgs.FollowJointTrajectoryResult;
 import trajectory_msgs.JointTrajectoryPoint;
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Logger;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -144,7 +145,7 @@ public class ActionServerNode extends AbstractNodeMain {
 	{
 		if (hasCurrentGoal()) 
 		{
-	      System.out.println("Goal reached: " + currentGoal.goalId);
+	      Logger.info("Goal reached: " + currentGoal.goalId);
 	    }
 	    markCurrentGoal(true, "");
 	}
@@ -153,8 +154,8 @@ public class ActionServerNode extends AbstractNodeMain {
 	{
 		if (hasCurrentGoal()) 
 		{
-			System.out.println("Goal failed: " + currentGoal.goalId);
-			System.out.println("Reason: " + error_msg);
+			Logger.warn("Goal failed: " + currentGoal.goalId);
+			Logger.warn("Reason: " + error_msg);
 	    }
 	    markCurrentGoal(false, error_msg);
 	}
