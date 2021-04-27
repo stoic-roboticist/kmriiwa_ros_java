@@ -157,11 +157,12 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		if (!initSuccessful) { throw new RuntimeException("Could not initialize the RoboticApplication successfully."); }
 		
 		//wait for ROS master
-		Logger.warn("waiting for the master");
+		Logger.warn("waiting for ROS master");
+		Logger.warn("Application will terminate in 2 min if no master connects");
 		long startTime = System.currentTimeMillis();
 		while (!allNodesConnected())
 		{
-			if (System.currentTimeMillis() - startTime > 5000)
+			if (System.currentTimeMillis() - startTime > 120000)
 			{
 				Logger.error("couldn't connect to master, exiting!!!");
 				nodeMainExecutor.shutdown();
