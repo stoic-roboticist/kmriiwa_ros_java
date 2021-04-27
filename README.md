@@ -6,7 +6,6 @@ A ROS driver for the KMRIIWA robot developed in pure JAVA using rosjava library.
 **To control the robot via ROS use [kmriiwa_ros_stack repository](https://github.com/stoic-roboticist/kmriiwa_ros_stack)**
 
 ## Description
----
 This driver launches a ROS node on the robot controller that exposes a number of ROS interfaces. These interfaces allow to command the robot and read its state. These interfaces are gouped under the robot namespace and are further divided according to the robot components, which include the LBR-IIWA14 arm and KMP200 Base. In addition optional interfaces can be exposed for a tool attahced to the robot arm. Below is a description of the exposed interfaces:
 - **LBR-IIWA14 arm state interfaces**
   - ***<robot_ns>/arm/joint_states***: This topic publishes the arm's joint states using sensor_msgs/JointState messages.
@@ -26,15 +25,14 @@ In addition to these interfaces, this driver also provides an abstract class ***
 TODO add an example project.  
 
 ## Setup
-  ---
 The KUKA KMRIIWA robot is programmed using the KUKA's Sunrise Workbench and their Java APIs.
 A Sunrise project, containing one or more Robotic Application can be synchronized with the robot controller and executed from the SmartPad.
 This package represent such a robotic application that can be synched with the robot controller and run from the SmartPad. To install this robotic application on the robot controller complete the following steps:
 ### **Setup the Sunrise Workbench Project**
   1. In the **Sunrise Workbench**, create a new sunrise project. Alternatively, you can copy a pre-existing prject from your workspace or load it from the robot controller.
   2. Open the **StationSetup.cat** 
-  3. Ensure that page to look more or less like:
-  ![image]()
+  3. Ensure that the software page have more or less the following components:
+  ![sunrise_software_tab](https://user-images.githubusercontent.com/13589969/116313878-45a84f00-a7a6-11eb-8490-48b602fcd85e.png)
 
 ### **Clone and setup the robotic application**
   1. Clone this repository to a location of your preference. We'll refer to this location as `KMRIIWA_ROS_JAVA_DIR`.
@@ -96,7 +94,6 @@ Alternatively, in case such problems arise, an NTP server would need to be runni
 
    
 ## Usage
----
 After the setup is done there should be a Robotic Application installed on the robot names *ROSKmriiwaController*.
 As mentioned before, this application requires having a ROS Master running on the ROS machine connected to the robot wireless network. That basically means running a roscore or call a launch file on a terminal. If you start *ROSKmriiwaController* without a ROS Master being online, it will wait for 2 minute until one is started.
 It should not matter which one you start first, ROSKmriiwaController or roscore.
@@ -106,7 +103,6 @@ Once you start both, the robot should connect to the ROS Master and some notific
 You can check if everything is okay by running the command rostopic list on any ROS machine connected to the master. This should list all the topics detailed in the Description section.
 
 ## Notes
----
 - This package do not modify the robot safety configuration and do not violate any of its rules. The safety controller is running all the time and will stop the application if any error or safety violation arises.
 - This driver doesn't support any low level ros_control interfaces because we don't have access to KUKA's official SmartServoing and FRI packages that would allow us to use these capabilities.  
   
