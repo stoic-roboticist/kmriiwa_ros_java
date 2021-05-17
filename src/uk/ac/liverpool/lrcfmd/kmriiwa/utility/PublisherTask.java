@@ -42,10 +42,9 @@ public class PublisherTask implements Runnable {
 		}
 		catch (Exception e)
 		{
-			Logger.error("publisher task error");
-			Logger.error(e.getMessage());
+			Logger.error("Publisher task couldn't publish messages");
 			e.printStackTrace();
-			throw new RuntimeException("Publisher couldn't publish messages");
+			throw new RuntimeException("Publisher task couldn't publish messages");
 		}
 
 	}

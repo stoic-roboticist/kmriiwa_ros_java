@@ -13,6 +13,8 @@ import org.ros.message.MessageFactory;
 import org.ros.node.NodeConfiguration;
 import org.ros.time.TimeProvider;
 
+import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Logger;
+
 public class LBRMsgGenerator {
 	
 	private LBR robot;
@@ -44,12 +46,18 @@ public class LBRMsgGenerator {
 	public sensor_msgs.JointState getCurrentJointState()
 	{
 		sensor_msgs.JointState msg = messageFactory.newFromType(sensor_msgs.JointState._TYPE);
-
-		msg.getHeader().setStamp(time.getCurrentTime());
-		msg.setName(Arrays.asList(joint_names));
-		msg.setPosition(robot.getCurrentJointPosition().getInternalArray());
-		msg.setEffort(robot.getMeasuredTorque().getTorqueValues());
-		
+		try
+		{
+			msg.getHeader().setStamp(time.getCurrentTime());
+			msg.setName(Arrays.asList(joint_names));
+			msg.setPosition(robot.getCurrentJointPosition().getInternalArray());
+			msg.setEffort(robot.getMeasuredTorque().getTorqueValues());
+		}
+		catch (NullPointerException e)
+		{
+			Logger.warn("No joint state data available");
+			Logger.warn("Empty JointState message is generated");
+		}
 		return msg;
 	}
 	
@@ -57,14 +65,20 @@ public class LBRMsgGenerator {
 	{
 		
 		kmriiwa_msgs.LBRStatus msg = messageFactory.newFromType(kmriiwa_msgs.LBRStatus._TYPE);
-		
-		msg.getHeader().setStamp(time.getCurrentTime());
-		msg.setMotionEnabled(robot.isMotionEnabled());
-		msg.setAxesMastered(robot.isMastered());
-		msg.setAxesGmsReferenced(robot.getSafetyState().areAllAxesGMSReferenced());
-		msg.setAxesPositionReferenced(robot.getSafetyState().areAllAxesPositionReferenced());
-		msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
-		
+		try
+		{
+			msg.getHeader().setStamp(time.getCurrentTime());
+			msg.setMotionEnabled(robot.isMotionEnabled());
+			msg.setAxesMastered(robot.isMastered());
+			msg.setAxesGmsReferenced(robot.getSafetyState().areAllAxesGMSReferenced());
+			msg.setAxesPositionReferenced(robot.getSafetyState().areAllAxesPositionReferenced());
+			msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
+		}
+		catch (NullPointerException e)
+		{
+			Logger.warn("Couldn't retrieve LBR arm status");
+			Logger.warn("Empty LBRStatus message is generated");
+		}
 		return msg;
 	}
 }

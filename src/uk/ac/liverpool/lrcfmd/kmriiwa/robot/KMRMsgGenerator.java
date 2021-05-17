@@ -92,9 +92,17 @@ public class KMRMsgGenerator {
 			msg.getHeader().setFrameId("laser_" + laserScanner.id + "_link");
 			if (fdi.getSubscription().isLaserSubscribed(laserScanner.port))
 			{
-				LaserScan laserScan = fdi.getNewLaserScan(laserScanner.port);
-				float ranges[] = laserScan.getScannedRanges();
-				msg.setRanges(ranges);
+				try 
+				{
+					LaserScan laserScan = fdi.getNewLaserScan(laserScanner.port);
+					float ranges[] = laserScan.getScannedRanges();
+					msg.setRanges(ranges);
+				}
+				catch (NullPointerException e)
+				{
+					Logger.warn("No laser scan data available from laser scanner: " + laserScanner.id);
+					Logger.warn("Empty LaserScan message is generated");
+				}
 			}
 			else
 			{
@@ -110,35 +118,43 @@ public class KMRMsgGenerator {
 		
 		if (fdi.getSubscription().isOdometrySubscribed())
 		{
-			Odometry odometry = fdi.getNewOdometry();
-			// Pose with covariance msg
-			geometry_msgs.PoseWithCovariance poseWithCov = messageFactory.newFromType(geometry_msgs.PoseWithCovariance._TYPE);
-			poseWithCov.getPose().getPosition().setX(odometry.getPose().getX());
-			poseWithCov.getPose().getPosition().setY(odometry.getPose().getY());
-			poseWithCov.getPose().getPosition().setZ(0.0);
-			
-			double quatPose[] = euler_to_quaternion(0,0,odometry.getPose().getTheta());
-			poseWithCov.getPose().getOrientation().setX(quatPose[0]);
-			poseWithCov.getPose().getOrientation().setY(quatPose[1]);
-			poseWithCov.getPose().getOrientation().setZ(quatPose[2]);
-			poseWithCov.getPose().getOrientation().setW(quatPose[3]);
-			
-			// Twist with covariance msg
-			geometry_msgs.TwistWithCovariance twistWithCov = messageFactory.newFromType(geometry_msgs.TwistWithCovariance._TYPE);
-			twistWithCov.getTwist().getLinear().setX(odometry.getVelocity().getX());
-			twistWithCov.getTwist().getLinear().setY(odometry.getVelocity().getY());
-			twistWithCov.getTwist().getLinear().setZ(0.0);
-			
-			twistWithCov.getTwist().getAngular().setX(0.0);
-			twistWithCov.getTwist().getAngular().setY(0.0);
-			twistWithCov.getTwist().getAngular().setZ(odometry.getVelocity().getTheta());
-			
-			// Odometry msg
-			msg.getHeader().setStamp(time.getCurrentTime());
-			msg.getHeader().setFrameId("odom");
-			msg.setPose(poseWithCov);
-			msg.setTwist(twistWithCov);
-			msg.setChildFrameId("base_footprint");
+			try
+			{
+				Odometry odometry = fdi.getNewOdometry();
+				// Pose with covariance msg
+				geometry_msgs.PoseWithCovariance poseWithCov = messageFactory.newFromType(geometry_msgs.PoseWithCovariance._TYPE);
+				poseWithCov.getPose().getPosition().setX(odometry.getPose().getX());
+				poseWithCov.getPose().getPosition().setY(odometry.getPose().getY());
+				poseWithCov.getPose().getPosition().setZ(0.0);
+				
+				double quatPose[] = euler_to_quaternion(0,0,odometry.getPose().getTheta());
+				poseWithCov.getPose().getOrientation().setX(quatPose[0]);
+				poseWithCov.getPose().getOrientation().setY(quatPose[1]);
+				poseWithCov.getPose().getOrientation().setZ(quatPose[2]);
+				poseWithCov.getPose().getOrientation().setW(quatPose[3]);
+				
+				// Twist with covariance msg
+				geometry_msgs.TwistWithCovariance twistWithCov = messageFactory.newFromType(geometry_msgs.TwistWithCovariance._TYPE);
+				twistWithCov.getTwist().getLinear().setX(odometry.getVelocity().getX());
+				twistWithCov.getTwist().getLinear().setY(odometry.getVelocity().getY());
+				twistWithCov.getTwist().getLinear().setZ(0.0);
+				
+				twistWithCov.getTwist().getAngular().setX(0.0);
+				twistWithCov.getTwist().getAngular().setY(0.0);
+				twistWithCov.getTwist().getAngular().setZ(odometry.getVelocity().getTheta());
+				
+				// Odometry msg
+				msg.getHeader().setStamp(time.getCurrentTime());
+				msg.getHeader().setFrameId("odom");
+				msg.setPose(poseWithCov);
+				msg.setTwist(twistWithCov);
+				msg.setChildFrameId("base_footprint");
+			}
+			catch (NullPointerException e)
+			{
+				Logger.warn("No odometry data is available");
+				Logger.warn("Empty Odometry message is generated");
+			}
 		}
 		else
 		{
@@ -151,14 +167,20 @@ public class KMRMsgGenerator {
 	public kmriiwa_msgs.KMRStatus getKMRStatus()
 	{
 		kmriiwa_msgs.KMRStatus msg = messageFactory.newFromType(kmriiwa_msgs.KMRStatus._TYPE);
-		
-		msg.getHeader().setStamp(time.getCurrentTime());
-		msg.setChargeStatePercentage((int) robot.getMobilePlatformBatteryState().getStateOfCharge());
-		msg.setWarningFieldClear(robot.getMobilePlatformSafetyState().isWarningFieldBreached());
-		msg.setSafetyFieldClear(robot.getMobilePlatformSafetyState().isSafetyFieldBreached());
-		msg.setMotionEnabled(robot.isMotionEnabled());
-		msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
-		
+		try
+		{
+			msg.getHeader().setStamp(time.getCurrentTime());
+			msg.setChargeStatePercentage((int) robot.getMobilePlatformBatteryState().getStateOfCharge());
+			msg.setWarningFieldClear(robot.getMobilePlatformSafetyState().isWarningFieldBreached());
+			msg.setSafetyFieldClear(robot.getMobilePlatformSafetyState().isSafetyFieldBreached());
+			msg.setMotionEnabled(robot.isMotionEnabled());
+			msg.setSafetyStateEnabled(robot.getSafetyState().getSafetyStopSignal().compareTo(SafetyStopType.NOSTOP) != 0);
+		}
+		catch (NullPointerException e)
+		{
+			Logger.warn("Couldn't retrieve KMR base status");
+			Logger.warn("Empty KMRStatus message is generated");
+		}
 		return msg;
 	}
 	
