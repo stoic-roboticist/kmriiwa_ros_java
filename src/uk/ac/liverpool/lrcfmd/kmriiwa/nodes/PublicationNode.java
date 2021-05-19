@@ -67,7 +67,7 @@ public class PublicationNode extends AbstractNodeMain {
 		}
 		else if (msg instanceof sensor_msgs.LaserScan)
 		{
-			if (((sensor_msgs.LaserScan) msg).getHeader().getFrameId().matches("laser_B1_link"))
+			if (((sensor_msgs.LaserScan) msg).getHeader().getFrameId().matches(robotName + "_laser_B1_link"))
 				laserB1ScanPublisher.publish((sensor_msgs.LaserScan) msg);
 			else
 			{

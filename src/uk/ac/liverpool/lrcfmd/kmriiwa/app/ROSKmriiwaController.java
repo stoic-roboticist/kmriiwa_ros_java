@@ -92,9 +92,9 @@ public class ROSKmriiwaController extends RoboticsAPIApplication {
 		configureTimeProvider();
 		
 		// Initialise KUKA arm and base commanders and message generators
-		lbrMsgGenerator = new LBRMsgGenerator(robotArm, timeProvider);
+		lbrMsgGenerator = new LBRMsgGenerator(robotArm, robotName, timeProvider);
 		lbrCommander = new LBRCommander(robotArm);
-		kmrMsgGenerator = new KMRMsgGenerator(robotBase, timeProvider);
+		kmrMsgGenerator = new KMRMsgGenerator(robotBase,robotName, timeProvider);
 		kmrCommander = new KMRCommander(robotBase);
 		
 		subscriber = new SubscriptionNode(robotName);

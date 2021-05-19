@@ -24,6 +24,7 @@ public class LBRMsgGenerator {
 	private MessageFactory messageFactory = nodeConf.getTopicMessageFactory();
 	private TimeProvider time;
 	
+	private String robotName;
 	private String[] joint_names;
 	
 	
@@ -33,14 +34,15 @@ public class LBRMsgGenerator {
 	 * @param name
 	 * @param timeProvider
 	 */
-	public LBRMsgGenerator(LBR lbr, TimeProvider timeProvider)
+	public LBRMsgGenerator(LBR lbr, String robotName, TimeProvider timeProvider)
 	{
 		this.robot = lbr;
+		this.robotName = robotName;
 		this.time = timeProvider;
 		
-		joint_names = new String[] { "kmriiwa_joint_1", "kmriiwa_joint_2", "kmriiwa_joint_3", 
-				"kmriiwa_joint_4", "kmriiwa_joint_5", "kmriiwa_joint_6",
-		        "kmriiwa_joint_7" };
+		joint_names = new String[] { robotName + "_joint_1", robotName + "_joint_2", robotName + "_joint_3", 
+				robotName + "_joint_4", robotName + "_joint_5", robotName + "_joint_6",
+				robotName + "_joint_7" };
 	}
 
 	public sensor_msgs.JointState getCurrentJointState()

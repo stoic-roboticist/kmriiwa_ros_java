@@ -16,6 +16,7 @@ import uk.ac.liverpool.lrcfmd.kmriiwa.utility.Logger;
 
 public class KMRMsgGenerator {
 	
+	private String robotName;
 	private KmpOmniMove robot = null;
 	 // Data retrieval socket via FDI 
     private FDIConnection fdi;
@@ -53,9 +54,10 @@ public class KMRMsgGenerator {
 	private MessageFactory messageFactory = nodeConf.getTopicMessageFactory();
 	private TimeProvider time;
 	
-	public KMRMsgGenerator(KmpOmniMove robot,TimeProvider timeProvider)
+	public KMRMsgGenerator(KmpOmniMove robot, String robotName, TimeProvider timeProvider)
 	{
 		this.robot = robot;
+		this.robotName = robotName;
 		this.time = timeProvider;
 		InetSocketAddress fdi_address = new InetSocketAddress(FDI_IP,FDI_PORT);
 		fdi = new FDIConnection(fdi_address);
@@ -89,7 +91,7 @@ public class KMRMsgGenerator {
 			
 			addLaserScanConstants(msg);
 			msg.getHeader().setStamp(time.getCurrentTime());
-			msg.getHeader().setFrameId("laser_" + laserScanner.id + "_link");
+			msg.getHeader().setFrameId(robotName +"_laser_" + laserScanner.id + "_link");
 			if (fdi.getSubscription().isLaserSubscribed(laserScanner.port))
 			{
 				try 
@@ -108,7 +110,6 @@ public class KMRMsgGenerator {
 			{
 				Logger.warn("FDI not connected to laser scanner" + laserScanner.id);
 			}
-			
 			return msg;
 	}
 	
@@ -145,10 +146,10 @@ public class KMRMsgGenerator {
 				
 				// Odometry msg
 				msg.getHeader().setStamp(time.getCurrentTime());
-				msg.getHeader().setFrameId("odom");
+				msg.getHeader().setFrameId(robotName + "_odom");
 				msg.setPose(poseWithCov);
 				msg.setTwist(twistWithCov);
-				msg.setChildFrameId("base_footprint");
+				msg.setChildFrameId(robotName + "_base_footprint");
 			}
 			catch (NullPointerException e)
 			{
